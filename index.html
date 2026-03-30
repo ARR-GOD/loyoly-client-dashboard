@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loyoly — Client Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #F5F4F0;
+  --hdr: #2B251F;
+  --card: #EEEDE6;
+  --card-h: #FFFFFF;
+  --t1: #52473C;
+  --t2: #645648;
+  --tm: #8C7E6F;
+  --brd: #DDD9D0;
+  --ac: #2965FE;
+  --ac-l: #EBF0FF;
+  --warm: #FED44B;
+  --grn: #2D8A56;
+  --grn-l: #E8F5EC;
+  --teal: #5CE0B5;
+  --pink: #FF6B8A;
+  --r: 14px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t2); line-height: 1.5; }
+h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
+
+/* ===== LOGIN OVERLAY ===== */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(43,37,31,0.92); backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: center;
+}
+.login-box {
+  background: #fff; border-radius: 20px; padding: 48px 40px; width: 380px;
+  text-align: center; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+}
+.login-box img { width: 64px; border-radius: 14px; margin-bottom: 16px; }
+.login-box h2 { font-size: 22px; margin-bottom: 6px; font-weight: 700; }
+.login-box p { font-size: 13px; color: var(--tm); margin-bottom: 24px; }
+#googleBtnContainer { display: flex; justify-content: center; margin-bottom: 16px; }
+.login-error { color: #C0392B; font-size: 12px; margin-top: 10px; display: none; }
+
+/* ===== HEADER ===== */
+.hdr {
+  background: var(--hdr); padding: 36px 40px 28px; position: relative; overflow: hidden;
+}
+.hdr::before {
+  content: ''; position: absolute; top: -80px; right: -40px; width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(92,224,181,0.12) 0%, rgba(254,212,75,0.08) 50%, transparent 70%);
+  pointer-events: none;
+}
+.hdr-top { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; position: relative; z-index: 1; }
+.hdr-logo { width: 44px; height: 44px; border-radius: 12px; }
+.hdr-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 800; color: #fff; }
+.hdr-title em { font-style: italic; color: var(--warm); }
+.hdr-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; position: relative; z-index: 1; }
+.stat-pill {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px); border-radius: 30px; padding: 8px 18px;
+  display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 500;
+}
+.stat-pill strong { color: #fff; font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; }
+.hdr-sub { font-size: 12px; color: rgba(255,255,255,0.4); position: relative; z-index: 1; }
+
+/* ===== LEADERBOARDS ===== */
+.leaders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 28px 40px; }
+.leader-panel {
+  background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.leader-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.leader-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--brd);
+}
+.leader-item:last-child { border-bottom: none; }
+.leader-rank {
+  width: 24px; height: 24px; border-radius: 50%; font-family: 'Fraunces', serif;
+  font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rank-1 { background: #FED44B; color: #2B251F; }
+.rank-2 { background: #C4C4C4; color: #2B251F; }
+.rank-3 { background: #CD7F32; color: #fff; }
+.rank-n { background: var(--bg); color: var(--tm); }
+.leader-logo { width: 28px; height: 28px; border-radius: 6px; object-fit: contain; background: #fff; flex-shrink: 0; }
+.leader-name { flex: 1; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-val { font-family: 'Fraunces', serif; font-size: 13px; font-weight: 700; color: var(--grn); white-space: nowrap; }
+.leader-badge {
+  font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.badge-roi { background: var(--grn-l); color: var(--grn); }
+.badge-cat { background: var(--ac-l); color: var(--ac); }
+
+/* ===== TOOLBAR ===== */
+.toolbar { padding: 0 40px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pill {
+  padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  border: 1.5px solid var(--brd); background: #fff; color: var(--t2); cursor: pointer;
+  transition: all .15s; user-select: none; white-space: nowrap;
+}
+.pill:hover { border-color: var(--ac); color: var(--ac); }
+.pill.on { background: var(--ac); color: #fff; border-color: var(--ac); }
+.pill .cnt { font-size: 10px; opacity: .6; margin-left: 3px; }
+.search-box {
+  margin-left: auto; position: relative;
+}
+.search-box input {
+  padding: 7px 14px 7px 32px; border: 1.5px solid var(--brd); border-radius: 20px;
+  font-size: 12px; font-family: inherit; background: #fff; width: 220px; outline: none;
+}
+.search-box input:focus { border-color: var(--ac); }
+.search-box::before {
+  content: '\1F50D'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; pointer-events: none;
+}
+
+/* ===== SYNC BAR ===== */
+.sync-bar { padding: 16px 40px 8px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--tm); }
+.refresh-btn {
+  margin-left: auto; padding: 4px 12px; border: 1.5px solid var(--brd); border-radius: 16px;
+  background: #fff; font-size: 11px; font-family: inherit; font-weight: 500; color: var(--t2);
+  cursor: pointer; transition: all .15s;
+}
+.refresh-btn:hover { border-color: var(--ac); color: var(--ac); }
+.refresh-btn.loading { opacity: .5; pointer-events: none; }
+.sync-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--grn);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+/* ===== ADVANCED FILTERS ===== */
+.adv-toggle {
+  padding: 4px 40px 0; font-size: 11px; color: var(--ac); cursor: pointer; user-select: none; font-weight: 500;
+}
+.adv-toggle:hover { text-decoration: underline; }
+.adv-panel {
+  padding: 0 40px; max-height: 0; overflow: hidden; transition: max-height .3s ease;
+}
+.adv-panel.open { max-height: 200px; }
+.adv-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px 0;
+}
+.adv-group label { display: block; font-size: 10px; font-weight: 600; color: var(--tm); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+.adv-group .range-row { display: flex; gap: 6px; }
+.adv-group input[type="number"] {
+  width: 100%; padding: 6px 8px; border: 1.5px solid var(--brd); border-radius: 8px;
+  font-size: 11px; font-family: inherit; outline: none;
+}
+.adv-group input:focus { border-color: var(--ac); }
+
+/* ===== CATEGORY SECTIONS ===== */
+.cat-section { padding: 0 40px; margin-bottom: 4px; }
+.cat-bar {
+  display: flex; align-items: center; gap: 10px; padding: 14px 0; cursor: pointer;
+  border-bottom: 1px solid var(--brd); user-select: none;
+}
+.cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cat-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; flex: 1; }
+.cat-count { font-size: 11px; color: var(--tm); }
+.cat-arr { font-family: 'Fraunces', serif; font-size: 13px; font-weight: 600; color: var(--ac); }
+.cat-chev {
+  font-size: 12px; color: var(--tm); transition: transform .2s; display: inline-block;
+}
+.cat-chev.collapsed { transform: rotate(-90deg); }
+.cat-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;
+  padding: 16px 0; overflow: hidden; transition: all .3s ease;
+}
+.cat-grid.hidden { display: none; }
+
+/* ===== CLIENT CARDS ===== */
+.card {
+  background: var(--card); border: 1.5px solid transparent; border-radius: var(--r);
+  padding: 32px 20px 26px; min-height: 210px; position: relative; cursor: default;
+  transition: all .2s ease; display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.card:hover {
+  transform: translateY(-3px); border-color: var(--ac); background: var(--card-h);
+  box-shadow: 0 8px 24px rgba(41,101,254,0.1);
+}
+.card-logo {
+  width: 96px; height: 96px; border-radius: 12px; object-fit: contain;
+  background: #fff; margin-bottom: 12px;
+}
+.card-initial {
+  width: 96px; height: 96px; border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700;
+  margin-bottom: 12px; color: #fff;
+}
+.card-name {
+  font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; color: var(--t1);
+  margin-bottom: 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-domain { font-size: 11px; color: var(--tm); margin-bottom: 2px; }
+.card-badges { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; }
+.badge-arr { font-size: 10px; font-weight: 700; background: var(--ac-l); color: var(--ac); padding: 2px 8px; border-radius: 20px; }
+.badge-roi-card { font-size: 10px; font-weight: 700; background: var(--grn-l); color: var(--grn); padding: 2px 8px; border-radius: 20px; }
+.card-age { position: absolute; bottom: 10px; right: 12px; font-size: 8px; color: var(--tm); }
+.card-group {
+  position: absolute; bottom: 10px; left: 12px; font-size: 8px; font-weight: 600;
+  background: var(--ac-l); color: var(--ac); padding: 1px 6px; border-radius: 10px;
+}
+
+/* Hover overlay */
+.card-hover {
+  position: absolute; inset: 0; background: rgba(245,244,240,0.97);
+  border-radius: var(--r); display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 7px; opacity: 0; transition: opacity .2s; padding: 20px;
+}
+.card:hover .card-hover { opacity: 1; }
+.metric-line { font-size: 12px; display: flex; gap: 6px; }
+.metric-label { color: var(--tm); }
+.metric-val { font-family: 'Fraunces', serif; font-weight: 600; }
+.metric-val.grn { color: var(--grn); }
+.metric-val.blue { color: var(--ac); }
+.metric-val.gold { color: #D4A017; }
+.metric-val.big { font-size: 14px; font-weight: 700; color: var(--t1); }
+
+/* ===== FOOTER ===== */
+.footer { text-align: center; padding: 32px 40px; font-size: 11px; color: var(--tm); opacity: .5; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .leaders { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .hdr { padding: 24px 20px 20px; }
+  .hdr-top { flex-direction: column; align-items: flex-start; }
+  .hdr-stats { display: grid; grid-template-columns: 1fr 1fr; }
+  .toolbar { padding: 0 20px; }
+  .search-box { margin-left: 0; width: 100%; }
+  .search-box input { width: 100%; }
+  .cat-section { padding: 0 20px; }
+  .cat-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .leaders { padding: 20px; }
+  .sync-bar { padding: 12px 20px 6px; }
+  .adv-toggle { padding: 4px 20px 0; }
+  .adv-panel { padding: 0 20px; }
+  .adv-grid { grid-template-columns: 1fr 1fr; }
+  .footer { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN OVERLAY ===== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzJCMjUxRiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMzYiIHI9IjEyIiBmaWxsPSIjNUNFMEI1Ii8+PGNpcmNsZSBjeD0iNDQiIGN5PSIyOCIgcj0iMTQiIGZpbGw9IiNGRjZCOEEiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjIwIiByPSI4IiBmaWxsPSIjRkVENDRCIi8+PC9zdmc+" alt="Loyoly" style="width:64px;border-radius:14px">
+    <h2>Loyoly Dashboard</h2>
+    <p>Connecte-toi pour accéder au tableau de performance</p>
+    <div id="googleBtnContainer"></div>
+    <div class="login-error" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<div class="hdr">
+  <div class="hdr-top">
+    <img class="hdr-logo" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzJCMjUxRiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMzYiIHI9IjEyIiBmaWxsPSIjNUNFMEI1Ii8+PGNpcmNsZSBjeD0iNDQiIGN5PSIyOCIgcj0iMTQiIGZpbGw9IiNGRjZCOEEiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjIwIiByPSI4IiBmaWxsPSIjRkVENDRCIi8+PC9zdmc+" alt="Loyoly">
+    <div class="hdr-title">Loyoly <em>Clients</em></div>
+  </div>
+  <div class="hdr-stats" id="hdrStats"></div>
+  <div class="hdr-sub">Tableau de performance — données synchronisées depuis HubSpot</div>
+</div>
+
+<!-- ===== LEADERBOARDS ===== -->
+<div class="leaders" id="leaders"></div>
+
+<!-- ===== TOOLBAR ===== -->
+<div class="toolbar" id="toolbar"></div>
+
+<!-- ===== SYNC BAR ===== -->
+<div class="sync-bar">
+  <span class="sync-dot"></span>
+  <span id="syncText"></span>
+  <button class="refresh-btn" id="refreshBtn" title="Rafraîchir les données HubSpot">&#x21BB; Refresh</button>
+</div>
+
+<!-- ===== ADVANCED FILTERS ===== -->
+<div class="adv-toggle" id="advToggle">Filtres avancés ▾</div>
+<div class="adv-panel" id="advPanel">
+  <div class="adv-grid">
+    <div class="adv-group">
+      <label>ROI</label>
+      <div class="range-row">
+        <input type="number" id="roiMin" placeholder="Min" step="0.1">
+        <input type="number" id="roiMax" placeholder="Max" step="0.1">
+      </div>
+    </div>
+    <div class="adv-group">
+      <label>ARR (€/an)</label>
+      <div class="range-row">
+        <input type="number" id="arrMin" placeholder="Min" step="100">
+        <input type="number" id="arrMax" placeholder="Max" step="100">
+      </div>
+    </div>
+    <div class="adv-group">
+      <label>Revenue (€)</label>
+      <div class="range-row">
+        <input type="number" id="revMin" placeholder="Min" step="100">
+        <input type="number" id="revMax" placeholder="Max" step="100">
+      </div>
+    </div>
+    <div class="adv-group">
+      <label>Ancienneté (mois)</label>
+      <div class="range-row">
+        <input type="number" id="ageMin" placeholder="Min" step="1">
+        <input type="number" id="ageMax" placeholder="Max" step="1">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CATEGORIES ===== -->
+<div id="catContainer"></div>
+
+<!-- ===== FOOTER ===== -->
+<div class="footer" id="footer"></div>
+
+<script>
+// ===== DATA =====
+const CLIENTS = [];
+
+// ===== CONSTANTS =====
+const CATEGORY_ORDER = [
+  'Apparel & Accessories','Beauty & Fitness','Health & Food Supplements',
+  'Home & Decoration','Food & Beverages','Kids & Family','Smoke & Vape',
+  'Sports','Pets Food & Accessories','Electronics','Gaming',
+  'Wine & Spirit','Intimate accessories','Automobile & Mecanics'
+];
+const CATEGORY_COLORS = {
+  'Apparel & Accessories':'#2B251F','Beauty & Fitness':'#C0392B',
+  'Health & Food Supplements':'#2D8A56','Home & Decoration':'#2965FE',
+  'Food & Beverages':'#D4A017','Kids & Family':'#E84393',
+  'Sports':'#0984E3','Smoke & Vape':'#636E72',
+  'Pets Food & Accessories':'#8854D0','Electronics':'#00B5AD',
+  'Gaming':'#BE2EDD','Wine & Spirit':'#B53471',
+  'Intimate accessories':'#FD79A8','Automobile & Mecanics':'#52473C'
+};
+const ALLOWED_DOMAINS = ['loyoly.io'];
+
+// ===== HELPERS =====
+function pf(v) { return parseFloat(v) || 0; }
+function hasData(c) { return pf(c.rev_l) > 0 || pf(c.rev_r) > 0 || pf(c.mrr) > 0; }
+function totalRev(c) { return pf(c.rev_l) + pf(c.rev_r); }
+function arr(c) { return pf(c.mrr) * 12; }
+function formatEur(v) {
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M\u20AC';
+  if (v >= 1_000) return (v / 1_000).toFixed(1) + 'k\u20AC';
+  if (v >= 1) return Math.round(v) + '\u20AC';
+  return '-';
+}
+function ageMonths(d) {
+  if (!d) return null;
+  const dt = new Date(d), now = new Date();
+  return Math.max(0, (now.getFullYear() - dt.getFullYear()) * 12 + now.getMonth() - dt.getMonth());
+}
+function ageLabel(months) {
+  if (months === null) return '';
+  if (months < 1) return '< 1 mois';
+  if (months < 12) return months + ' mois';
+  const y = Math.floor(months / 12), m = months % 12;
+  return m > 0 ? y + 'a ' + m + 'm' : y + 'a';
+}
+function logoUrl(domain) {
+  if (!domain) return null;
+  return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+}
+function fallbackLogo(domain) {
+  return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+}
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ===== AUTH =====
+function checkAuth() {
+  const auth = localStorage.getItem('loyoly_auth');
+  if (!auth) return false;
+  try { const d = JSON.parse(auth); return Date.now() - d.ts < 7 * 24 * 3600 * 1000; } catch { return false; }
+}
+function grantAccess(method, email) {
+  localStorage.setItem('loyoly_auth', JSON.stringify({ method, email, ts: Date.now() }));
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+if (checkAuth()) document.getElementById('loginOverlay').style.display = 'none';
+
+window.addEventListener('load', () => {
+  if (typeof google !== 'undefined' && google.accounts) {
+    try {
+      google.accounts.id.initialize({
+        client_id: 'YOUR_ID.apps.googleusercontent.com',
+        callback: (response) => {
+          try {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            const domain = payload.email.split('@')[1];
+            if (ALLOWED_DOMAINS.includes(domain)) {
+              grantAccess('google', payload.email);
+            } else {
+              const err = document.getElementById('loginErr');
+              err.textContent = 'Accès réservé aux emails @loyoly.io';
+              err.style.display = 'block';
+            }
+          } catch (e) {
+            console.error('Auth error', e);
+          }
+        }
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('googleBtnContainer'),
+        { theme: 'outline', size: 'large', width: 300, text: 'signin_with' }
+      );
+    } catch (e) { console.warn('Google Sign-In not available', e); }
+  }
+});
+
+
+// ===== STATE =====
+const displayed = CLIENTS.filter(hasData);
+const activeCats = new Set();
+const collapsedCats = new Set();
+let searchQuery = '';
+let advFilters = { roiMin: null, roiMax: null, arrMin: null, arrMax: null, revMin: null, revMax: null, ageMin: null, ageMax: null };
+
+// ===== SYNC BAR =====
+const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const now = new Date();
+document.getElementById('syncText').textContent = `HubSpot — ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+// Refresh button
+document.getElementById('refreshBtn').onclick = async () => {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ Refresh en cours…';
+  try {
+    const res = await fetch('/api/redeploy', { method: 'GET' });
+    const data = await res.json();
+    if (data.ok) {
+      btn.textContent = '✓ Redéploiement lancé';
+      setTimeout(() => { btn.textContent = '↻ Refresh'; btn.classList.remove('loading'); }, 4000);
+    } else {
+      btn.textContent = '✗ ' + (data.error || 'Erreur');
+      setTimeout(() => { btn.textContent = '↻ Refresh'; btn.classList.remove('loading'); }, 3000);
+    }
+  } catch (e) {
+    btn.textContent = '✗ Erreur réseau';
+    setTimeout(() => { btn.textContent = '↻ Refresh'; btn.classList.remove('loading'); }, 3000);
+  }
+};
+
+// ===== HEADER STATS =====
+function renderStats(list) {
+  const cats = new Set(list.map(c => c.category).filter(Boolean));
+  const totalArr = list.reduce((s, c) => s + arr(c), 0);
+  const totalRv = list.reduce((s, c) => s + totalRev(c), 0);
+  document.getElementById('hdrStats').innerHTML = `
+    <div class="stat-pill">Clients <strong>${list.length}</strong></div>
+    <div class="stat-pill">Industries <strong>${cats.size}</strong></div>
+    <div class="stat-pill">ARR <strong>${formatEur(totalArr)}</strong></div>
+    <div class="stat-pill">Rev. Généré <strong>${formatEur(totalRv)}</strong></div>
+  `;
+}
+
+// ===== LEADERBOARDS =====
+function renderLeaders(list) {
+  const byRev = [...list].sort((a, b) => totalRev(b) - totalRev(a)).slice(0, 8);
+  const byRoi = [...list].filter(c => pf(c.roi) > 1).sort((a, b) => pf(b.roi) - pf(a.roi)).slice(0, 8);
+  const byArr = [...list].sort((a, b) => arr(b) - arr(a)).slice(0, 8);
+
+  function renderPanel(emoji, title, items, valFn, badgeFn) {
+    return `<div class="leader-panel"><h3>${emoji} ${title}</h3>${items.map((c, i) => {
+      const rank = i < 3 ? `rank-${i + 1}` : 'rank-n';
+      const logo = c.domain ? logoUrl(c.domain) : '';
+      return `<div class="leader-item">
+        <span class="leader-rank ${rank}">${i + 1}</span>
+        ${logo ? `<img class="leader-logo" src="${logo}" onerror="this.src='${fallbackLogo(c.domain)}';this.onerror=null" alt="">` : ''}
+        <span class="leader-name">${escHtml(c.name)}</span>
+        <span class="leader-val">${valFn(c)}</span>
+        <span class="leader-badge ${badgeFn(c).cls}">${badgeFn(c).text}</span>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  document.getElementById('leaders').innerHTML =
+    renderPanel('\uD83D\uDCB0', 'Top Revenue', byRev,
+      c => formatEur(totalRev(c)),
+      c => ({ text: 'x' + pf(c.roi).toFixed(0) + ' ROI', cls: 'badge-roi' })
+    ) +
+    renderPanel('\uD83D\uDE80', 'Top ROI', byRoi,
+      c => 'x' + pf(c.roi).toFixed(1),
+      c => ({ text: formatEur(totalRev(c)), cls: 'badge-cat' })
+    ) +
+    renderPanel('\uD83D\uDCC8', 'Top ARR', byArr,
+      c => formatEur(arr(c)),
+      c => ({ text: (c.category || '').split(' ')[0] || '-', cls: 'badge-cat' })
+    );
+}
+
+// ===== TOOLBAR =====
+function renderToolbar(list) {
+  const catCounts = {};
+  list.forEach(c => { if (c.category) catCounts[c.category] = (catCounts[c.category] || 0) + 1; });
+  const cats = CATEGORY_ORDER.filter(c => catCounts[c]);
+
+  let html = `<span class="pill ${activeCats.size === 0 ? 'on' : ''}" data-cat="all">Tous</span>`;
+  cats.forEach(cat => {
+    html += `<span class="pill ${activeCats.has(cat) ? 'on' : ''}" data-cat="${escHtml(cat)}">${escHtml(cat)} <span class="cnt">${catCounts[cat]}</span></span>`;
+  });
+  html += `<div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." value="${escHtml(searchQuery)}"></div>`;
+  document.getElementById('toolbar').innerHTML = html;
+
+  // Events
+  document.querySelectorAll('.pill').forEach(el => {
+    el.onclick = () => {
+      const cat = el.dataset.cat;
+      if (cat === 'all') {
+        activeCats.clear();
+      } else {
+        if (activeCats.has(cat)) activeCats.delete(cat); else activeCats.add(cat);
+        if (activeCats.size === 0) { /* back to all */ }
+      }
+      render();
+    };
+  });
+  document.getElementById('searchInput').oninput = (e) => {
+    searchQuery = e.target.value.toLowerCase();
+    render();
+  };
+}
+
+// ===== ADVANCED FILTERS =====
+document.getElementById('advToggle').onclick = () => {
+  document.getElementById('advPanel').classList.toggle('open');
+};
+['roiMin','roiMax','arrMin','arrMax','revMin','revMax','ageMin','ageMax'].forEach(id => {
+  document.getElementById(id).oninput = (e) => {
+    advFilters[id] = e.target.value !== '' ? parseFloat(e.target.value) : null;
+    render();
+  };
+});
+
+// ===== FILTERING =====
+function filterClients() {
+  return displayed.filter(c => {
+    // Category filter
+    if (activeCats.size > 0 && !activeCats.has(c.category)) return false;
+    // Search
+    if (searchQuery && !(c.name || '').toLowerCase().includes(searchQuery) && !(c.domain || '').toLowerCase().includes(searchQuery)) return false;
+    // Advanced
+    const roi = pf(c.roi), a = arr(c), rev = totalRev(c), age = ageMonths(c.cust_date);
+    if (advFilters.roiMin !== null && roi < advFilters.roiMin) return false;
+    if (advFilters.roiMax !== null && roi > advFilters.roiMax) return false;
+    if (advFilters.arrMin !== null && a < advFilters.arrMin) return false;
+    if (advFilters.arrMax !== null && a > advFilters.arrMax) return false;
+    if (advFilters.revMin !== null && rev < advFilters.revMin) return false;
+    if (advFilters.revMax !== null && rev > advFilters.revMax) return false;
+    if (advFilters.ageMin !== null && (age === null || age < advFilters.ageMin)) return false;
+    if (advFilters.ageMax !== null && (age === null || age > advFilters.ageMax)) return false;
+    return true;
+  });
+}
+
+// ===== RENDER CARDS =====
+function renderCard(c) {
+  const domain = c.domain || c.website || '';
+  const a = arr(c);
+  const roi = pf(c.roi);
+  const rev = totalRev(c);
+  const age = ageMonths(c.cust_date);
+  const catColor = CATEGORY_COLORS[c.category] || '#8C7E6F';
+
+  const logoSrc = domain ? logoUrl(domain) : '';
+  const logoHtml = domain
+    ? `<img class="card-logo" src="${logoSrc}" onerror="this.onerror=function(){this.outerHTML='<div class=\\'card-initial\\' style=\\'background:${catColor}\\'>${escHtml((c.name || '?')[0].toUpperCase())}</div>'};this.src='${fallbackLogo(domain)}'" alt="">`
+    : `<div class="card-initial" style="background:${catColor}">${escHtml((c.name || '?')[0].toUpperCase())}</div>`;
+
+  return `<div class="card">
+    <div class="card-badges">
+      <span>${roi > 1 ? `<span class="badge-roi-card">x${roi.toFixed(1)} ROI</span>` : ''}</span>
+      <span>${a > 0 ? `<span class="badge-arr">${formatEur(a)}/an</span>` : ''}</span>
+    </div>
+    ${logoHtml}
+    <div class="card-name" title="${escHtml(c.name)}">${escHtml(c.name)}</div>
+    <div class="card-domain">${escHtml(domain)}</div>
+    ${c.group ? `<span class="card-group">${escHtml(c.group)}</span>` : ''}
+    ${age !== null ? `<span class="card-age">${ageLabel(age)}</span>` : ''}
+    <div class="card-hover">
+      ${pf(c.rev_l) > 0 ? `<div class="metric-line"><span class="metric-label">Rev. Loyalty</span> <span class="metric-val grn">${formatEur(pf(c.rev_l))}</span></div>` : ''}
+      ${pf(c.rev_r) > 0 ? `<div class="metric-line"><span class="metric-label">Rev. Referral</span> <span class="metric-val blue">${formatEur(pf(c.rev_r))}</span></div>` : ''}
+      ${rev > 0 ? `<div class="metric-line"><span class="metric-label">Rev. Total</span> <span class="metric-val big">${formatEur(rev)}</span></div>` : ''}
+      ${roi > 0 ? `<div class="metric-line"><span class="metric-label">ROI</span> <span class="metric-val gold">x${roi.toFixed(1)}</span></div>` : ''}
+      ${a > 0 ? `<div class="metric-line"><span class="metric-label">ARR Loyoly</span> <span class="metric-val">${formatEur(a)}/an</span></div>` : ''}
+      ${age !== null ? `<div class="metric-line"><span class="metric-label">Ancienneté</span> <span class="metric-val">${ageLabel(age)}</span></div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ===== RENDER CATEGORIES =====
+function renderCategories(filtered) {
+  const byCat = {};
+  filtered.forEach(c => {
+    const cat = c.category || 'Autre';
+    if (!byCat[cat]) byCat[cat] = [];
+    byCat[cat].push(c);
+  });
+
+  const order = [...CATEGORY_ORDER, ...Object.keys(byCat).filter(k => !CATEGORY_ORDER.includes(k))];
+  let html = '';
+  for (const cat of order) {
+    if (!byCat[cat]) continue;
+    const clients = byCat[cat];
+    const color = CATEGORY_COLORS[cat] || '#8C7E6F';
+    const catArr = clients.reduce((s, c) => s + arr(c), 0);
+    const collapsed = collapsedCats.has(cat);
+    html += `<div class="cat-section">
+      <div class="cat-bar" data-cat="${escHtml(cat)}">
+        <span class="cat-dot" style="background:${color}"></span>
+        <span class="cat-name">${escHtml(cat)}</span>
+        <span class="cat-count">${clients.length}</span>
+        <span class="cat-arr">${formatEur(catArr)}</span>
+        <span class="cat-chev ${collapsed ? 'collapsed' : ''}">&#9660;</span>
+      </div>
+      <div class="cat-grid ${collapsed ? 'hidden' : ''}">
+        ${clients.map(renderCard).join('')}
+      </div>
+    </div>`;
+  }
+  document.getElementById('catContainer').innerHTML = html;
+
+  // Toggle events
+  document.querySelectorAll('.cat-bar').forEach(bar => {
+    bar.onclick = () => {
+      const cat = bar.dataset.cat;
+      if (collapsedCats.has(cat)) collapsedCats.delete(cat); else collapsedCats.add(cat);
+      const chev = bar.querySelector('.cat-chev');
+      const grid = bar.nextElementSibling;
+      chev.classList.toggle('collapsed');
+      grid.classList.toggle('hidden');
+    };
+  });
+}
+
+// ===== MAIN RENDER =====
+function render() {
+  const filtered = filterClients();
+  renderStats(filtered);
+  renderLeaders(filtered);
+  renderToolbar(filtered);
+  renderCategories(filtered);
+  document.getElementById('footer').textContent = `${filtered.length} clients affichés sur ${CLIENTS.length} au total`;
+  // Restore search focus
+  const si = document.getElementById('searchInput');
+  if (si && searchQuery) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
+}
+
+render();
+</script>
+</body>
+</html>
