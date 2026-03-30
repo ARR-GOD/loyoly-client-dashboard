@@ -1,6 +1,4 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "node scripts/refresh.js",
   "outputDirectory": ".",
   "crons": [
     { "path": "/api/redeploy", "schedule": "0 7 * * *" }
