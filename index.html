@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -257,7 +257,7 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
   <div class="login-box">
     <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzJCMjUxRiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMzYiIHI9IjEyIiBmaWxsPSIjNUNFMEI1Ii8+PGNpcmNsZSBjeD0iNDQiIGN5PSIyOCIgcj0iMTQiIGZpbGw9IiNGRjZCOEEiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjIwIiByPSI4IiBmaWxsPSIjRkVENDRCIi8+PC9zdmc+" alt="Loyoly" style="width:64px;border-radius:14px">
     <h2>Loyoly Dashboard</h2>
-    <p>Connecte-toi pour accéder au tableau de performance</p>
+    <p>Sign in to access the performance dashboard</p>
     <div id="googleBtnContainer"></div>
     <div class="login-error" id="loginErr"></div>
   </div>
@@ -270,7 +270,7 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
     <div class="hdr-title">Loyoly <em>Clients</em></div>
   </div>
   <div class="hdr-stats" id="hdrStats"></div>
-  <div class="hdr-sub">Tableau de performance — données synchronisées depuis HubSpot</div>
+  <div class="hdr-sub">Performance dashboard — data synced from HubSpot</div>
 </div>
 
 <!-- ===== LEADERBOARDS ===== -->
@@ -283,11 +283,11 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
 <div class="sync-bar">
   <span class="sync-dot"></span>
   <span id="syncText"></span>
-  <button class="refresh-btn" id="refreshBtn" title="Rafraîchir les données HubSpot">&#x21BB; Refresh</button>
+  <button class="refresh-btn" id="refreshBtn" title="Refresh HubSpot data">&#x21BB; Refresh</button>
 </div>
 
 <!-- ===== ADVANCED FILTERS ===== -->
-<div class="adv-toggle" id="advToggle">Filtres avancés ▾</div>
+<div class="adv-toggle" id="advToggle">Advanced filters ▾</div>
 <div class="adv-panel" id="advPanel">
   <div class="adv-grid">
     <div class="adv-group">
@@ -298,7 +298,7 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
       </div>
     </div>
     <div class="adv-group">
-      <label>ARR (€/an)</label>
+      <label>ARR (€/yr)</label>
       <div class="range-row">
         <input type="number" id="arrMin" placeholder="Min" step="100">
         <input type="number" id="arrMax" placeholder="Max" step="100">
@@ -312,7 +312,7 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
       </div>
     </div>
     <div class="adv-group">
-      <label>Ancienneté (mois)</label>
+      <label>Tenure (months)</label>
       <div class="range-row">
         <input type="number" id="ageMin" placeholder="Min" step="1">
         <input type="number" id="ageMax" placeholder="Max" step="1">
@@ -367,10 +367,10 @@ function ageMonths(d) {
 }
 function ageLabel(months) {
   if (months === null) return '';
-  if (months < 1) return '< 1 mois';
-  if (months < 12) return months + ' mois';
+  if (months < 1) return '< 1 mo';
+  if (months < 12) return months + ' mo';
   const y = Math.floor(months / 12), m = months % 12;
-  return m > 0 ? y + 'a ' + m + 'm' : y + 'a';
+  return m > 0 ? y + 'y ' + m + 'm' : y + 'y';
 }
 function logoUrl(domain) {
   if (!domain) return null;
@@ -406,7 +406,7 @@ window.addEventListener('load', () => {
               grantAccess('google', payload.email);
             } else {
               const err = document.getElementById('loginErr');
-              err.textContent = 'Accès réservé aux emails @loyoly.io';
+              err.textContent = 'Access restricted to @loyoly.io accounts';
               err.style.display = 'block';
             }
           } catch (e) {
@@ -431,27 +431,27 @@ let searchQuery = '';
 let advFilters = { roiMin: null, roiMax: null, arrMin: null, arrMax: null, revMin: null, revMax: null, ageMin: null, ageMax: null };
 
 // ===== SYNC BAR =====
-const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const now = new Date();
-document.getElementById('syncText').textContent = `HubSpot — ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+document.getElementById('syncText').textContent = `HubSpot — ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
 
 // Refresh button
 document.getElementById('refreshBtn').onclick = async () => {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('loading');
-  btn.textContent = '⏳ Refresh en cours…';
+  btn.textContent = '⏳ Refreshing…';
   try {
     const res = await fetch('/api/redeploy', { method: 'GET' });
     const data = await res.json();
     if (data.ok) {
-      btn.textContent = '✓ Redéploiement lancé';
+      btn.textContent = '✓ Redeployment triggered';
       setTimeout(() => { btn.textContent = '↻ Refresh'; btn.classList.remove('loading'); }, 4000);
     } else {
-      btn.textContent = '✗ ' + (data.error || 'Erreur');
+      btn.textContent = '✗ ' + (data.error || 'Error');
       setTimeout(() => { btn.textContent = '↻ Refresh'; btn.classList.remove('loading'); }, 3000);
     }
   } catch (e) {
-    btn.textContent = '✗ Erreur réseau';
+    btn.textContent = '✗ Network error';
     setTimeout(() => { btn.textContent = '↻ Refresh'; btn.classList.remove('loading'); }, 3000);
   }
 };
@@ -465,7 +465,7 @@ function renderStats(list) {
     <div class="stat-pill">Clients <strong>${list.length}</strong></div>
     <div class="stat-pill">Industries <strong>${cats.size}</strong></div>
     <div class="stat-pill">ARR <strong>${formatEur(totalArr)}</strong></div>
-    <div class="stat-pill">Rev. Généré <strong>${formatEur(totalRv)}</strong></div>
+    <div class="stat-pill">Rev. Generated <strong>${formatEur(totalRv)}</strong></div>
   `;
 }
 
@@ -510,11 +510,11 @@ function renderToolbar(list) {
   list.forEach(c => { if (c.category) catCounts[c.category] = (catCounts[c.category] || 0) + 1; });
   const cats = CATEGORY_ORDER.filter(c => catCounts[c]);
 
-  let html = `<span class="pill ${activeCats.size === 0 ? 'on' : ''}" data-cat="all">Tous</span>`;
+  let html = `<span class="pill ${activeCats.size === 0 ? 'on' : ''}" data-cat="all">All</span>`;
   cats.forEach(cat => {
     html += `<span class="pill ${activeCats.has(cat) ? 'on' : ''}" data-cat="${escHtml(cat)}">${escHtml(cat)} <span class="cnt">${catCounts[cat]}</span></span>`;
   });
-  html += `<div class="search-box"><input type="text" id="searchInput" placeholder="Rechercher..." value="${escHtml(searchQuery)}"></div>`;
+  html += `<div class="search-box"><input type="text" id="searchInput" placeholder="Search..." value="${escHtml(searchQuery)}"></div>`;
   document.getElementById('toolbar').innerHTML = html;
 
   // Events
@@ -585,7 +585,7 @@ function renderCard(c) {
   return `<div class="card">
     <div class="card-badges">
       <span>${roi > 1 ? `<span class="badge-roi-card">x${roi.toFixed(1)} ROI</span>` : ''}</span>
-      <span>${a > 0 ? `<span class="badge-arr">${formatEur(a)}/an</span>` : ''}</span>
+      <span>${a > 0 ? `<span class="badge-arr">${formatEur(a)}/yr</span>` : ''}</span>
     </div>
     ${logoHtml}
     <div class="card-name" title="${escHtml(c.name)}">${escHtml(c.name)}</div>
@@ -597,8 +597,8 @@ function renderCard(c) {
       ${pf(c.rev_r) > 0 ? `<div class="metric-line"><span class="metric-label">Rev. Referral</span> <span class="metric-val blue">${formatEur(pf(c.rev_r))}</span></div>` : ''}
       ${rev > 0 ? `<div class="metric-line"><span class="metric-label">Rev. Total</span> <span class="metric-val big">${formatEur(rev)}</span></div>` : ''}
       ${roi > 0 ? `<div class="metric-line"><span class="metric-label">ROI</span> <span class="metric-val gold">x${roi.toFixed(1)}</span></div>` : ''}
-      ${a > 0 ? `<div class="metric-line"><span class="metric-label">ARR Loyoly</span> <span class="metric-val">${formatEur(a)}/an</span></div>` : ''}
-      ${age !== null ? `<div class="metric-line"><span class="metric-label">Ancienneté</span> <span class="metric-val">${ageLabel(age)}</span></div>` : ''}
+      ${a > 0 ? `<div class="metric-line"><span class="metric-label">ARR Loyoly</span> <span class="metric-val">${formatEur(a)}/yr</span></div>` : ''}
+      ${age !== null ? `<div class="metric-line"><span class="metric-label">Tenure</span> <span class="metric-val">${ageLabel(age)}</span></div>` : ''}
     </div>
   </div>`;
 }
@@ -607,7 +607,7 @@ function renderCard(c) {
 function renderCategories(filtered) {
   const byCat = {};
   filtered.forEach(c => {
-    const cat = c.category || 'Autre';
+    const cat = c.category || 'Other';
     if (!byCat[cat]) byCat[cat] = [];
     byCat[cat].push(c);
   });
@@ -655,7 +655,7 @@ function render() {
   renderLeaders(filtered);
   renderToolbar(filtered);
   renderCategories(filtered);
-  document.getElementById('footer').textContent = `${filtered.length} clients affichés sur ${CLIENTS.length} au total`;
+  document.getElementById('footer').textContent = `${filtered.length} clients displayed out of ${CLIENTS.length} total`;
   // Restore search focus
   const si = document.getElementById('searchInput');
   if (si && searchQuery) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
