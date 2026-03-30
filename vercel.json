@@ -1,5 +1,7 @@
 {
-  "outputDirectory": ".",
+  "buildCommand": "cp index.html public/index.html && cp data/clients.json public/data/clients.json",
+  "outputDirectory": "public",
+  "installCommand": "mkdir -p public/data",
   "headers": [
     {
       "source": "/(.*)",
