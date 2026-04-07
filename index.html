@@ -225,6 +225,11 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
 .metric-val.gold { color: #D4A017; }
 .metric-val.big { font-size: 14px; font-weight: 700; color: var(--t1); }
 
+/* ===== FILTER ROWS (CMS / COUNTRY) ===== */
+.filter-row { padding: 4px 40px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 0; }
+.filter-row:empty { display: none; }
+.filter-row-label { font-size: 10px; font-weight: 600; color: var(--tm); text-transform: uppercase; letter-spacing: .5px; margin-right: 2px; white-space: nowrap; }
+
 /* ===== FOOTER ===== */
 .footer { text-align: center; padding: 32px 40px; font-size: 11px; color: var(--tm); opacity: .5; }
 
@@ -320,6 +325,12 @@ h1,h2,h3 { font-family: 'Fraunces', serif; color: var(--t1); }
     </div>
   </div>
 </div>
+
+<!-- ===== CMS FILTER ROW ===== -->
+<div class="filter-row" id="cmsRow"></div>
+
+<!-- ===== COUNTRY FILTER ROW ===== -->
+<div class="filter-row" id="countryRow"></div>
 
 <!-- ===== CATEGORIES ===== -->
 <div id="catContainer"></div>
@@ -6010,6 +6021,8 @@ window.addEventListener('load', () => {
 // ===== STATE =====
 const displayed = CLIENTS.filter(hasData);
 const activeCats = new Set();
+const activeCms = new Set();
+const activeCountries = new Set();
 const collapsedCats = new Set();
 let searchQuery = '';
 let advFilters = { roiMin: null, roiMax: null, arrMin: null, arrMax: null, revMin: null, revMax: null, ageMin: null, ageMax: null };
@@ -6131,14 +6144,58 @@ document.getElementById('advToggle').onclick = () => {
   };
 });
 
+// ===== CMS & COUNTRY FILTER ROWS =====
+function normalizeCms(v) { return (v || '').trim(); }
+
+function renderCmsRow() {
+  const cmsCounts = {};
+  displayed.forEach(c => { const v = normalizeCms(c.cms); if (v) cmsCounts[v] = (cmsCounts[v] || 0) + 1; });
+  const values = Object.keys(cmsCounts).sort();
+  if (!values.length) { document.getElementById('cmsRow').innerHTML = ''; return; }
+  let html = `<span class="filter-row-label">CMS</span>`;
+  html += `<span class="pill ${activeCms.size === 0 ? 'on' : ''}" data-cms="all">All</span>`;
+  values.forEach(v => {
+    html += `<span class="pill ${activeCms.has(v) ? 'on' : ''}" data-cms="${escHtml(v)}">${escHtml(v)} <span class="cnt">${cmsCounts[v]}</span></span>`;
+  });
+  document.getElementById('cmsRow').innerHTML = html;
+  document.querySelectorAll('#cmsRow .pill').forEach(el => {
+    el.onclick = () => {
+      const v = el.dataset.cms;
+      if (v === 'all') activeCms.clear();
+      else { if (activeCms.has(v)) activeCms.delete(v); else activeCms.add(v); }
+      render();
+    };
+  });
+}
+
+function renderCountryRow() {
+  const countryCounts = {};
+  displayed.forEach(c => { const v = c.country; if (v) countryCounts[v] = (countryCounts[v] || 0) + 1; });
+  const values = Object.keys(countryCounts).sort();
+  if (!values.length) { document.getElementById('countryRow').innerHTML = ''; return; }
+  let html = `<span class="filter-row-label">Country</span>`;
+  html += `<span class="pill ${activeCountries.size === 0 ? 'on' : ''}" data-country="all">All</span>`;
+  values.forEach(v => {
+    html += `<span class="pill ${activeCountries.has(v) ? 'on' : ''}" data-country="${escHtml(v)}">${escHtml(v)} <span class="cnt">${countryCounts[v]}</span></span>`;
+  });
+  document.getElementById('countryRow').innerHTML = html;
+  document.querySelectorAll('#countryRow .pill').forEach(el => {
+    el.onclick = () => {
+      const v = el.dataset.country;
+      if (v === 'all') activeCountries.clear();
+      else { if (activeCountries.has(v)) activeCountries.delete(v); else activeCountries.add(v); }
+      render();
+    };
+  });
+}
+
 // ===== FILTERING =====
 function filterClients() {
   return displayed.filter(c => {
-    // Category filter
     if (activeCats.size > 0 && !activeCats.has(c.category)) return false;
-    // Search
+    if (activeCms.size > 0 && !activeCms.has(normalizeCms(c.cms))) return false;
+    if (activeCountries.size > 0 && !activeCountries.has(c.country)) return false;
     if (searchQuery && !(c.name || '').toLowerCase().includes(searchQuery) && !(c.domain || '').toLowerCase().includes(searchQuery)) return false;
-    // Advanced
     const roi = pf(c.roi), a = arr(c), rev = totalRev(c), age = ageMonths(c.cust_date);
     if (advFilters.roiMin !== null && roi < advFilters.roiMin) return false;
     if (advFilters.roiMax !== null && roi > advFilters.roiMax) return false;
@@ -6183,6 +6240,8 @@ function renderCard(c) {
       ${roi > 0 ? `<div class="metric-line"><span class="metric-label">ROI</span> <span class="metric-val gold">x${roi.toFixed(1)}</span></div>` : ''}
       ${a > 0 ? `<div class="metric-line"><span class="metric-label">ARR Loyoly</span> <span class="metric-val">${formatEur(a)}/yr</span></div>` : ''}
       ${age !== null ? `<div class="metric-line"><span class="metric-label">Tenure</span> <span class="metric-val">${ageLabel(age)}</span></div>` : ''}
+      ${c.cms ? `<div class="metric-line"><span class="metric-label">CMS</span> <span class="metric-val">${escHtml(normalizeCms(c.cms))}</span></div>` : ''}
+      ${c.country ? `<div class="metric-line"><span class="metric-label">Country</span> <span class="metric-val">${escHtml(c.country)}</span></div>` : ''}
     </div>
   </div>`;
 }
@@ -6238,9 +6297,10 @@ function render() {
   renderStats(filtered);
   renderLeaders(filtered);
   renderToolbar(filtered);
+  renderCmsRow();
+  renderCountryRow();
   renderCategories(filtered);
   document.getElementById('footer').textContent = `${filtered.length} clients displayed out of ${CLIENTS.length} total`;
-  // Restore search focus
   const si = document.getElementById('searchInput');
   if (si && searchQuery) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
 }
